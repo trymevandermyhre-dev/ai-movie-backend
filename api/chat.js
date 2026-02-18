@@ -1,21 +1,10 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
-  // 🔹 CORS HEADERS (VIKTIG)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // 🔹 Preflight request fra Shopify / browser
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  // 🔹 Kun POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST allowed" });
   }
@@ -27,13 +16,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No message provided" });
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are a movie recommendation assistant. Suggest 3 movies with short explanations based on the user's mood and preferences.",
+            "You are CineMood, an AI that recommends movies based on the user's mood. Give 3–5 movie recommendations with a short reason for each.",
         },
         {
           role: "user",
@@ -42,11 +31,16 @@ export default async function handler(req, res) {
       ],
     });
 
+    const reply = completion.choices[0].message.content;
+
+    // ⬇️ VIKTIG: dette feltet frontend leser
     return res.status(200).json({
-      reply: completion.choices[0].message.content,
+      reply: reply,
     });
   } catch (error) {
     console.error("API ERROR:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Failed to generate response",
+    });
   }
 }
