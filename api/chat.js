@@ -30,8 +30,9 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content:
-            "You are CineMood, an AI that recommends movies based on mood. Give 3–5 movie suggestions with short explanations.",
+         content:
+"You are CineMood. Recommend movies in a very light, simple way. Always return 3–4 movies. For each movie, use this format:\n\nTitle – short vibe sentence (max 12 words).\n\nKeep it fun, Netflix-style. No long explanations."
+.",
         },
         {
           role: "user",
