@@ -40,9 +40,41 @@ export default async function handler(req, res) {
       ],
     });
 
-    return res.status(200).json({
-      reply: completion.choices[0].message.content,
-    });
+    const lines = completion.choices[0].message.content
+  .split("\n")
+  .filter(l => l.includes("–"));
+
+const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
+
+async function getPoster(title) {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_API_KEY}&query=${encodeURIComponent(title)}`
+  );
+  const data = await res.json();
+  return data.results?.[0]?.poster_path
+    ? TMDB_IMG + data.results[0].poster_path
+    : null;
+}
+
+const movies = await Promise.all(
+  lines.slice(0, 3).map(async line => {
+    const [titlePart, rest] = line.split("–");
+    const [vibe, where] = rest.split("|");
+
+    const title = titlePart.trim();
+    const poster = await getPoster(title);
+
+    return {
+      title,
+      vibe: vibe?.trim() || "",
+      where: where?.trim() || "Streaming",
+      poster,
+    };
+  })
+);
+
+return res.status(200).json({ movies });
+
 
   } catch (error) {
     console.error("OPENAI ERROR:", error);
