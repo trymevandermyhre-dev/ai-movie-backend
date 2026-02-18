@@ -34,15 +34,20 @@ export default async function handler(req, res) {
         {
           role: "system",
           content:
-            "You are CineMood. Recommend 3–4 movies in a light, Netflix-style way. Short vibe sentences only.",
+            "You are CineMood. Recommend EXACTLY 3 movies.\n\nIMPORTANT RULES:\n- Each movie MUST be on ONE single line\n- DO NOT number the list\n- DO NOT use quotes\n- Use EXACTLY this format:\nTitle – short vibe | Where to watch\n\nExample:\nSuperbad – Hilarious teen comedy chaos | Netflix"
+
         },
         { role: "user", content: message },
       ],
     });
 
-    const lines = completion.choices[0].message.content
+   const raw = completion.choices[0].message.content;
+
+const lines = raw
   .split("\n")
-  .filter(l => l.includes("–"));
+  .map(l => l.trim())
+  .filter(l => l.includes("–") && l.includes("|"));
+
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
 
