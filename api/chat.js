@@ -5,6 +5,17 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
+  // 🔹 CORS HEADERS (VIKTIG)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // 🔹 Preflight request fra Shopify / browser
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // 🔹 Kun POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST allowed" });
   }
@@ -22,7 +33,7 @@ export default async function handler(req, res) {
         {
           role: "system",
           content:
-            "You are CineMood, an AI that recommends movies based on mood and preferences.",
+            "You are a movie recommendation assistant. Suggest 3 movies with short explanations based on the user's mood and preferences.",
         },
         {
           role: "user",
@@ -31,11 +42,11 @@ export default async function handler(req, res) {
       ],
     });
 
-    const reply = completion.choices[0].message.content;
-
-    return res.status(200).json({ reply });
+    return res.status(200).json({
+      reply: completion.choices[0].message.content,
+    });
   } catch (error) {
-    console.error("AI ERROR:", error);
-    return res.status(500).json({ error: "AI failed" });
+    console.error("API ERROR:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
