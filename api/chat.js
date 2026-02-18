@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -16,13 +16,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No message provided" });
     }
 
-    const completion = await client.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are CineMood, an AI that recommends movies based on the user's mood. Give 3–5 movie recommendations with a short reason for each.",
+            "You are CineMood, an AI that recommends movies based on mood. Answer with a short list of movie recommendations and a short explanation.",
         },
         {
           role: "user",
@@ -33,14 +33,9 @@ export default async function handler(req, res) {
 
     const reply = completion.choices[0].message.content;
 
-    // ⬇️ VIKTIG: dette feltet frontend leser
-    return res.status(200).json({
-      reply: reply,
-    });
+    return res.status(200).json({ reply });
   } catch (error) {
     console.error("API ERROR:", error);
-    return res.status(500).json({
-      error: "Failed to generate response",
-    });
+    return res.status(500).json({ error: "AI failed" });
   }
 }
