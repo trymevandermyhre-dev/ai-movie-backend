@@ -5,11 +5,12 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  // CORS
+  // ✅ CORS – DETTE ER KRITISK
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // ✅ Preflight request (Shopify stopper her uten dette)
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -26,29 +27,30 @@ export default async function handler(req, res) {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // ← VIKTIG ENDRING
+      model: "gpt-3.5-turbo",
+      max_tokens: 200,
+      temperature: 0.7,
       messages: [
         {
           role: "system",
-         content:
-"You are CineMood. Recommend movies in a very light, simple way. Always return 3–4 movies. For each movie, use this format:\n\nTitle – short vibe sentence (max 12 words).\n\nKeep it fun, Netflix-style. No long explanations."
-.",
+          content:
+            "You are CineMood. Recommend 3–4 movies in a light, Netflix-style way. Short vibe sentences only.",
         },
-        {
-          role: "user",
-          content: message,
-        },
+        { role: "user", content: message },
       ],
     });
 
-    const reply = completion.choices[0].message.content;
+    return res.status(200).json({
+      reply: completion.choices[0].message.content,
+    });
 
-    return res.status(200).json({ reply });
   } catch (error) {
     console.error("OPENAI ERROR:", error);
-    return res.status(500).json({
-      error: "OpenAI request failed",
-      details: error.message,
+
+    // ✅ ALDRI SEND 500 UTEN CORS
+    return res.status(200).json({
+      reply:
+        "I'm getting too many requests right now 😅 Please wait a few seconds and try again.",
     });
   }
 }
